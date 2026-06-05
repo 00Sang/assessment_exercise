@@ -1,0 +1,16 @@
+[build-system]
+requires = ["flit_core >=3.4,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "assessment_exercise"
+authors = [{ name = "Assessment Scheme Builder", email = "dev@example.com" }]
+description = "CBSE assessment scheme builder exercise for Frappe Education"
+requires-python = ">=3.10"
+readme = "README.md"
+dynamic = ["version"]
+dependencies = []
+
+[tool.bench.frappe-dependencies]
+frappe = ">=15.0.0,<16.0.0"
+education = ">=15.0.0,<16.0.0"
