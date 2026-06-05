@@ -42,12 +42,31 @@ bench --site school.localhost install-app assessment_exercise
 bench restart
 ```
 
-Or use the helper script:
+Or use the helper script (recommended). **Run these from the project root** — the folder that contains `backend/`, `frontend/`, and `scripts/` (not from inside `frontend/` or your frappe-bench):
 
 ```bash
+# 1. Clone the repo (first time only)
+git clone https://github.com/00Sang/assessment_exercise.git
+cd assessment_exercise
+
+# If you already have the repo, go to its root:
+# cd /path/to/assessment-scheme-builder-exercise
+
+# 2. Make the script executable (first time only)
 chmod +x scripts/install-app-to-bench.sh
+
+# 3. Install — pass your bench path and site name as arguments
 ./scripts/install-app-to-bench.sh /path/to/frappe-bench school.localhost
 ```
+
+Example with typical paths:
+
+```bash
+cd ~/assessment_exercise
+./scripts/install-app-to-bench.sh ~/frappe-bench school.localhost
+```
+
+The script links `backend/` into `frappe-bench/apps/assessment_exercise`, runs `install-app`, and restarts bench. Ensure `bench start` is running (or start it after install).
 
 **Requires:** Frappe Education app on the same site (`bench get-app education && bench --site school.localhost install-app education`).
 
@@ -55,9 +74,18 @@ chmod +x scripts/install-app-to-bench.sh
 
 Programs, courses, academic year/terms, and student groups must exist before saving plans:
 
+From the **same project root** as above:
+
 ```bash
 chmod +x scripts/seed-master-data.sh
 ./scripts/seed-master-data.sh /path/to/frappe-bench school.localhost 2025-26
+```
+
+Example:
+
+```bash
+cd ~/assessment_exercise
+./scripts/seed-master-data.sh ~/frappe-bench school.localhost 2025-26
 ```
 
 The seed is idempotent (safe to run twice).
@@ -69,9 +97,13 @@ The seed is idempotent (safe to run twice).
 
 ### 3. Start the frontend
 
+From the project root, open a **new terminal** (keep `bench start` running in the first):
+
 ```bash
-cd frontend
-yarn install
+cd /path/to/assessment_exercise/frontend
+# or: cd frontend   (if you are already in the project root)
+
+yarn install   # first time only
 yarn dev
 ```
 
