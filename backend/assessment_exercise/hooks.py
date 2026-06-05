@@ -6,3 +6,7 @@ app_email = "dev@example.com"
 app_license = "MIT"
 
 required_apps = ["frappe", "education"]
+
+override_doctype_class = {
+	"Assessment Plan": "assessment_exercise.overrides.assessment_plan_override.AssessmentPlanOverride",
+}

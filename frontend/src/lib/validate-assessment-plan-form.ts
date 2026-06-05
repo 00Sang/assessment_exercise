@@ -19,7 +19,6 @@ const MAIN_INTERNAL_TOTAL = 20
 const SKILL_INTERNAL_TOTAL = 50
 const MAIN_PT_MAX = 80
 const SKILL_PT_MAX = 50
-const CO_SCHOLASTIC_MAX = 5
 
 const parseScore = (value: string): number | null => {
   const trimmed = value.trim()
@@ -54,7 +53,6 @@ export const validateAssessmentPlanForm = ({
   const criteriaTotal = getCriteriaTotal(criteria)
   const hasMainSubject = uniqueCategories.includes('main')
   const hasSkillSubject = uniqueCategories.includes('skill')
-  const hasCoScholasticSubject = uniqueCategories.includes('co-scholastic')
   if (cycleHints.isPt) {
     if (hasMainSubject && maxScore !== null && maxScore > MAIN_PT_MAX) {
       messages.push(`PT must not exceed ${MAIN_PT_MAX} marks for main subjects.`)
@@ -78,14 +76,6 @@ export const validateAssessmentPlanForm = ({
       messages.push(
         'Bulk save cannot use one internal criteria set for both main (20) and skill (50) subjects. Save them separately or adjust selected courses.',
       )
-    }
-  }
-  if (hasCoScholasticSubject) {
-    if (cycleHints.isPt || cycleHints.isMainExam) {
-      messages.push('Co-scholastic subjects must not use PT or theory/main exam groups.')
-    }
-    if (maxScore !== null && maxScore > CO_SCHOLASTIC_MAX) {
-      messages.push('Co-scholastic subjects must use the 5-point scale only (maximum 5 marks).')
     }
   }
   return messages

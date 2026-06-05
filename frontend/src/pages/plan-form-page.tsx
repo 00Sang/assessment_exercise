@@ -1462,12 +1462,6 @@ export function PlanFormPage() {
             {ptCapHint ? (
               <p className="text-xs text-muted-foreground">{ptCapHint}</p>
             ) : null}
-            {selectedSubjectCategories.includes('co-scholastic') &&
-            (cycleHints.isPt || cycleHints.isMainExam) ? (
-              <p className="text-xs text-destructive">
-                Co-scholastic subjects must use internal assessment only (5-point scale).
-              </p>
-            ) : null}
           </Field>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-col gap-1">

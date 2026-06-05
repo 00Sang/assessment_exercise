@@ -33,11 +33,6 @@ def validate_assessment_plan_payload(payload: dict) -> None:
 			raise frappe.ValidationError(
 				f"Skill subject internal criteria must sum to exactly 50 (current: {criteria_total})."
 			)
-	elif subject_type == "CO_SCHOLASTIC":
-		if is_pt or is_main_exam:
-			raise frappe.ValidationError("Co-scholastic subjects must not have theory/main exam groups.")
-		if max_score > 5:
-			raise frappe.ValidationError("Co-scholastic subjects must use the 5-point scale only.")
 	for row in criteria:
 		if not row.get("assessmentCriteria") or row.get("maxMarks") is None:
 			raise frappe.ValidationError("Each criteria row must have Assessment Criteria and Maximum Score.")

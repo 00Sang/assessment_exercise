@@ -69,6 +69,38 @@ def cleanup_exercise_data(academic_year: str = DEFAULT_ACADEMIC_YEAR) -> dict[st
 	}
 
 
+def seed_grading_scales() -> dict[str, Any]:
+	"""Re-create demo grading scales (Grading 1, 2, 3). Safe to run multiple times."""
+	frappe.only_for(("System Manager", "Administrator"))
+	summary: dict[str, list[str]] = {
+		"created": [],
+		"skipped": [],
+		"warnings": [],
+		"deleted": [],
+		"errors": [],
+	}
+	scale_names = sorted(
+		set(GRADING_SCALE_DEFINITIONS.keys()) | set(GRADING_SCALE_LEGACY_ALIASES.keys())
+	)
+	for scale_name in scale_names:
+		if _is_grading_scale_in_use(scale_name):
+			summary["skipped"].append(f"Grading Scale (in use): {scale_name}")
+			continue
+		_delete_document_if_exists("Grading Scale", scale_name, summary)
+	_ensure_grading_scales(summary)
+	frappe.db.commit()
+	return {
+		"createdCount": len(summary["created"]),
+		"skippedCount": len(summary["skipped"]),
+		"deletedCount": len(summary["deleted"]),
+		"errorCount": len(summary["errors"]),
+		"created": summary["created"],
+		"skipped": summary["skipped"],
+		"deleted": summary["deleted"],
+		"errors": summary["errors"],
+	}
+
+
 def seed_master_data(academic_year: str = DEFAULT_ACADEMIC_YEAR) -> dict[str, Any]:
 	"""
 	Create Programs, Courses, Academic Year/Terms, and Student Groups (one per class).
@@ -219,6 +251,11 @@ def _resolve_academic_term_name(academic_year: str, term_name: str) -> str:
 	if existing_names:
 		return existing_names[0]
 	return term_title
+
+
+def _is_grading_scale_in_use(scale_name: str) -> bool:
+	"""Return True when an Assessment Plan references the grading scale."""
+	return bool(frappe.db.exists("Assessment Plan", {"grading_scale": scale_name}))
 
 
 def _ensure_grading_scales(summary: dict[str, list[str]]) -> None:

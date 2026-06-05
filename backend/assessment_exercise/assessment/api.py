@@ -25,7 +25,10 @@ from .services.assessment_plan_service import (
 	list_assessment_plans as fetch_plans,
 	save_assessment_plan as save_plan_record,
 )
-from .services.master_data_seed_service import seed_master_data as seed_education_master_data
+from .services.master_data_seed_service import (
+	seed_grading_scales as seed_grading_scale_records,
+	seed_master_data as seed_education_master_data,
+)
 from .services.term_scheme_service import (
 	get_assessment_scheme as build_assessment_scheme,
 	get_term_scheme as build_term_scheme,
@@ -163,6 +166,12 @@ def delete_assessment_group(assessment_group_name: str):
 def seed_master_data(academic_year: str = "2025-26"):
 	"""Seed Programs, Courses, Academic Year/Terms, and Student Groups (idempotent)."""
 	return _handle_api_call(lambda: seed_education_master_data(academic_year))
+
+
+@frappe.whitelist()
+def seed_grading_scales():
+	"""Re-create demo grading scales Grading 1, 2, and 3."""
+	return _handle_api_call(seed_grading_scale_records)
 
 
 # --- Assessment Plan ---

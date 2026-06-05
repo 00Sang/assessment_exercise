@@ -58,7 +58,7 @@ def save_assessment_plan(payload: dict) -> dict:
 			doc.assessment_criteria = []
 			for row in criteria_rows:
 				doc.append("assessment_criteria", row)
-			_persist_and_submit_plan(doc, is_insert=False)
+			doc = _persist_and_submit_plan(doc, is_insert=False)
 		else:
 			doc = frappe.get_doc(
 				{
@@ -78,7 +78,7 @@ def save_assessment_plan(payload: dict) -> dict:
 					"assessment_criteria": criteria_rows,
 				}
 			)
-			_persist_and_submit_plan(doc, is_insert=True)
+			doc = _persist_and_submit_plan(doc, is_insert=True)
 		frappe.db.commit()
 		return _serialize_plan(doc.name)
 	except Exception:
@@ -161,18 +161,23 @@ def _find_existing_plan_name(
 	academic_year: str,
 	academic_term: str,
 ) -> str | None:
-	"""Find existing plan by composite key."""
-	return frappe.db.get_value(
+	"""Find the latest active plan by composite key, falling back to cancelled."""
+	matches = frappe.get_all(
 		"Assessment Plan",
-		{
+		filters={
 			"student_group": student_group,
 			"course": course,
 			"assessment_group": assessment_group,
 			"academic_year": academic_year,
 			"academic_term": academic_term,
 		},
-		"name",
+		fields=["name", "docstatus"],
+		order_by="modified desc",
 	)
+	for plan in matches:
+		if plan.docstatus != 2:
+			return plan.name
+	return matches[0].name if matches else None
 
 
 def _serialize_plan(plan_name: str) -> dict:
@@ -220,17 +225,26 @@ def _serialize_plan(plan_name: str) -> dict:
 	}
 
 
-def _persist_and_submit_plan(doc, *, is_insert: bool) -> None:
+def _persist_and_submit_plan(doc, *, is_insert: bool):
 	"""Save an Assessment Plan and submit it so it is active in Education workflows."""
 	if is_insert:
 		doc.insert()
-	elif doc.docstatus == 1:
+		if doc.docstatus == 0:
+			doc.submit()
+		return doc
+	if doc.docstatus == 1:
 		doc.cancel()
-		doc.save()
+	if doc.docstatus == 2:
+		cancelled_name = doc.name
+		doc = frappe.copy_doc(doc)
+		doc.docstatus = 0
+		doc.amended_from = cancelled_name
+		doc.insert()
 	else:
 		doc.save()
 	if doc.docstatus == 0:
 		doc.submit()
+	return doc
 
 
 def _resolve_plan_status(docstatus: int) -> str:
