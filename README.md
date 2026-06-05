@@ -30,6 +30,18 @@ docker compose -f pwd.yml up -d
 # Site is typically school.localhost:8000 — install education on the bench first
 ```
 
+## Reset bench (test fresh pull)
+
+To uninstall the app, delete exercise test data, and remove the symlink (simulate a clean clone):
+
+```bash
+cd /path/to/assessment_exercise
+chmod +x scripts/reset-bench-for-fresh-setup.sh
+./scripts/reset-bench-for-fresh-setup.sh /path/to/frappe-bench school.localhost 2025-26
+```
+
+Then follow **Setup** below from step 1.
+
 ## Setup
 
 ### 1. Install the backend app
