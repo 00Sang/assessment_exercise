@@ -247,22 +247,30 @@ export function AssessmentGroupPage() {
     ASSESSMENT_API.getPlanFormOptions,
     undefined,
     'assessment-group-form-options',
+    { revalidateOnFocus: false, revalidateOnReconnect: false },
   )
   const planFormOptions =
     unwrapFrappeData<PlanFormOptions>(planFormOptionsResponse) ?? EMPTY_PLAN_FORM_OPTIONS
   const planFormOptionsError = unwrapFrappeError(planFormOptionsResponse)
   const academicYearOptions = planFormOptions.academicYears
+  const groupsCacheKey =
+    academicYear.length > 0 ? `assessment-groups-${academicYear}` : null
   const {
     data: groupsResponse,
-    isLoading,
+    isLoading: isLoadingGroups,
     mutate,
     error: fetchError,
   } = useFrappeGetCall(
     ASSESSMENT_API.getAssessmentGroups,
     { academic_year: academicYear },
-    `assessment-groups-${academicYear}`,
-    { isPaused: () => academicYear.length === 0 },
+    groupsCacheKey,
+    { revalidateOnFocus: false, revalidateOnReconnect: false },
   )
+  const hasLoadedGroups = groupsResponse !== undefined
+  const isInitialGroupsLoading =
+    academicYear.length > 0 && !hasLoadedGroups && isLoadingGroups
+  const isInitialPlanFormOptionsLoading =
+    planFormOptionsResponse === undefined && isLoadingPlanFormOptions
   const { call: bulkCreateGroups } = useFrappePostCall(ASSESSMENT_API.bulkCreateAssessmentGroups)
   const { call: updateGroup } = useFrappePostCall(ASSESSMENT_API.updateAssessmentGroup)
   const { call: deleteGroup } = useFrappePostCall(ASSESSMENT_API.deleteAssessmentGroup)
@@ -280,17 +288,17 @@ export function AssessmentGroupPage() {
   const hasSavedGroups = parsedTermsFromApi.length > 0
 
   useEffect(() => {
-    if (isLoadingPlanFormOptions) {
+    if (isInitialPlanFormOptionsLoading) {
       return
     }
     if (academicYearOptions.length > 0 && academicYear.length === 0) {
       setAcademicYear(academicYearOptions[0].academic_year_name)
     }
-  }, [academicYear, academicYearOptions, isLoadingPlanFormOptions])
+  }, [academicYear, academicYearOptions, isInitialPlanFormOptionsLoading])
 
   useEffect(() => {
     if (
-      isLoading ||
+      (academicYear.length > 0 && !hasLoadedGroups) ||
       isSaving ||
       deletingExamName !== null ||
       updatingExamName !== null ||
@@ -307,9 +315,10 @@ export function AssessmentGroupPage() {
       return stillExists ? currentId : (nextTerms[0]?.id ?? 'term-1')
     })
   }, [
+    academicYear,
     deletingExamName,
     editingExamName,
-    isLoading,
+    hasLoadedGroups,
     isSaving,
     parsedTermsFromApi,
     updatingExamName,
@@ -469,7 +478,7 @@ export function AssessmentGroupPage() {
             </AlertDescription>
           </Alert>
         )}
-        {!isLoadingPlanFormOptions && academicYearOptions.length === 0 ? (
+        {!isInitialPlanFormOptionsLoading && academicYearOptions.length === 0 ? (
           <Alert>
             <AlertTitle>No academic years found</AlertTitle>
             <AlertDescription>
@@ -485,10 +494,10 @@ export function AssessmentGroupPage() {
             </AlertDescription>
           </Alert>
         )}
-        {isLoadingPlanFormOptions || isLoading ? (
+        {isInitialPlanFormOptionsLoading || isInitialGroupsLoading ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Spinner />
-            Loading assessment groups for {academicYear}…
+            Loading assessment groups for {academicYear || 'selected year'}…
           </div>
         ) : null}
         <FieldGroup className="grid grid-cols-2 gap-4">
@@ -497,12 +506,12 @@ export function AssessmentGroupPage() {
             <Select
               value={academicYear.length > 0 ? academicYear : undefined}
               onValueChange={setAcademicYear}
-              disabled={isLoadingPlanFormOptions || academicYearOptions.length === 0}
+              disabled={isInitialPlanFormOptionsLoading || academicYearOptions.length === 0}
             >
               <SelectTrigger id="assessment-group-year" className="max-w-xs">
                 <SelectValue
                   placeholder={
-                    isLoadingPlanFormOptions ? 'Loading years…' : 'Select academic year'
+                    isInitialPlanFormOptionsLoading ? 'Loading years…' : 'Select academic year'
                   }
                 />
               </SelectTrigger>
@@ -541,7 +550,7 @@ export function AssessmentGroupPage() {
             </Select>
           </Field>
         </FieldGroup>
-        {!isLoading && !hasSavedGroups ? (
+        {!isInitialGroupsLoading && academicYear.length > 0 && !hasSavedGroups ? (
           <Alert>
             <AlertTitle>No groups saved yet</AlertTitle>
             <AlertDescription>
@@ -564,7 +573,7 @@ export function AssessmentGroupPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={isBusy || isLoading}
+                  disabled={isBusy || isSaving || academicYear.length === 0}
                   onClick={() => void handleAddExamType(selectedTerm.id)}
                 >
                   {isSaving ? <Spinner data-icon="inline-start" /> : null}
@@ -617,7 +626,7 @@ export function AssessmentGroupPage() {
               </Button>
             </div>
           </div>
-          {isLoading ? (
+          {isInitialGroupsLoading ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Spinner />
               Loading…
